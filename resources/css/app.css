@@ -1,0 +1,75 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
+.uploadMediaTwitter > input[type="file"] {
+  display: none;
+}
+
+.uploadMediaTwitter {
+  display: inline-block;
+  padding: 6px 12px;
+  cursor: pointer;
+}
+
+.hashtag {
+  color: #1da1f2; /* Cor azul do Twitter */
+  text-decoration: none; /* Remove o sublinhado padrão */
+}
+
+.hashtag:hover {
+  text-decoration: underline; /* Adiciona sublinhado ao passar o mouse */
+  cursor: pointer; /* Altera o cursor ao passar o mouse */
+}
+
+
+@layer components {
+  /* width */
+  ::-webkit-scrollbar {
+    width: 12px;
+    height: 12px;
+  }
+
+  /* Track */
+  ::-webkit-scrollbar-track {
+    border-radius: 100vh;
+    background: #FFF;
+  }
+
+  /* Handle */
+  ::-webkit-scrollbar-thumb {
+    background: #CCC;
+    border-radius: 100vh;
+    border: 2px solid #FFF;
+  }
+
+  /* Handle on hover */
+  ::-webkit-scrollbar-thumb:hover {
+    background: #AAA;
+  }
+
+  /* width */
+  .dark ::-webkit-scrollbar {
+    width: 12px;
+    height: 12px;
+  }
+
+  /* Track */
+  .dark ::-webkit-scrollbar-track {
+    border-radius: 100vh;
+    background: #374151;
+  }
+
+  /* Handle */
+  .dark ::-webkit-scrollbar-thumb {
+    background: #6b7280;
+    border-radius: 100vh;
+    border: 2px solid #374151;
+  }
+
+  /* Handle on hover */
+  .dark ::-webkit-scrollbar-thumb:hover {
+    background: #7a8294;
+  }
+}
