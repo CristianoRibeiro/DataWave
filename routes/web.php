@@ -2,6 +2,8 @@
 
 use Illuminate\Support\Facades\Route;
 
+use App\Livewire\DirectMessageUsersComponent;
+
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -25,4 +27,6 @@ Route::middleware([
     Route::get('/dashboard', function () {
         return view('dashboard');
     })->name('dashboard');
+
+    Route::get('/direct-messages', DirectMessageUsersComponent::class)->name('direct-messages.users');
 });

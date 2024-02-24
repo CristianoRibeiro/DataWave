@@ -59,39 +59,28 @@ class User extends Authenticatable
         'profile_photo_url',
     ];
 
-
-    // Relacionamento para os usuários que este usuário está seguindo
-    public function following()
-    {
-        return $this->belongsToMany(User::class, 'followers', 'user_id', 'follower_id');
-    }
-
-    // Método para seguir um usuário
-    public function follow(User $user)
-    {
-        $this->following()->syncWithoutDetaching($user->id);
-    }
-
-    // Método para deseguir um usuário
-    public function unfollow(User $user)
-    {
-        $this->following()->detach($user->id);
-    }
-
-    // Verifica se este usuário está seguindo outro usuário
-    public function isFollowing(User $user)
-    {
-        return $this->following->contains($user);
-    }
-
-
-     /**
-     * Define a relação de muitos para muitos entre usuários e tweets
-     * para representar os tweets que este usuário curtiu.
+    /**
+     * Define o relacionamento para os tweets que este usuário curtiu.
      */
     public function likes()
     {
-        return $this->belongsToMany(Tweet::class, 'likes', 'user_id', 'tweet_id')->withTimestamps();
+        return $this->hasMany(Like::class);
+    }
+
+    /**
+     * Define o relacionamento para os tweets que este usuário retweetou.
+     */
+    public function retweets()
+    {
+        return $this->hasMany(Retweet::class);
+    }
+
+    /**
+     * Define o relacionamento para os comentários feitos por este usuário.
+     */
+    public function comments()
+    {
+        return $this->hasMany(Comment::class);
     }
 
     /**
@@ -99,7 +88,7 @@ class User extends Authenticatable
      */
     public function like(Tweet $tweet)
     {
-        $this->likes()->attach($tweet->id);
+        $this->likes()->create(['tweet_id' => $tweet->id]);
     }
 
     /**
@@ -107,14 +96,22 @@ class User extends Authenticatable
      */
     public function unlike(Tweet $tweet)
     {
-        $this->likes()->detach($tweet->id);
+        $this->likes()->where('tweet_id', $tweet->id)->delete();
     }
 
     /**
-     * Verifica se o usuário curtiu um determinado tweet.
+     * Permite que o usuário retweete um tweet.
      */
-    public function hasLiked(Tweet $tweet)
+    public function retweet(Tweet $tweet)
     {
-        return $this->likes->contains($tweet);
+        $this->retweets()->create(['tweet_id' => $tweet->id]);
+    }
+
+    /**
+     * Permite que o usuário comente um tweet.
+     */
+    public function comment(Tweet $tweet, $content)
+    {
+        $tweet->comments()->create(['user_id' => $this->id, 'content' => $content]);
     }
 }
