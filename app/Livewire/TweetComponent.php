@@ -6,6 +6,7 @@ use Livewire\Component;
 use App\Models\Tweet;
 use App\Models\Hashtag;
 use Illuminate\Support\Str;
+use App\Http\Requests\CreateTweetRequest;
 use Livewire\WithFileUploads;
 
 class TweetComponent extends Component
@@ -15,57 +16,83 @@ class TweetComponent extends Component
     public $content;
     public $media;
 
+    // Renderiza o componente com os tweets mais recentes
     public function render()
     {
         $tweets = Tweet::with('hashtags')->latest()->get();
         return view('livewire.tweet-component', compact('tweets'));
     }
 
-    public function createTweet()
+    // Cria um novo tweet
+    public function createTweet(CreateTweetRequest $request)
     {
-        $this->validate([
-            'content' => 'required',
-            'media' => '',
+        // Valida os dados do formulário
+        $validatedData = $request->validated();
+
+        // Cria um novo tweet com os dados validados
+        $tweet = new Tweet([
+            'user_id' => auth()->id(),
+            'content' => $validatedData['content'],
         ]);
 
-
-        // Salvar o tweet
-        $tweet = new Tweet();
-        $tweet->user_id = auth()->id();
-        $tweet->content = $this->content;
-
+        // Salva a mídia associada ao tweet, se existir
         if ($this->media) {
             $tweet->media = $this->media->store('media', 'public');
         }
 
+        // Salva o tweet no banco de dados
         $tweet->save();
 
-        // Extrair e salvar as hashtags mencionadas no tweet
+        // Processa as hashtags no conteúdo do tweet
+        $this->processHashtags($tweet);
+
+        // Limpa os campos do formulário
+        $this->resetFields();
+
+        // Exibe uma mensagem de sucesso
+        $this->dispatchToast('success', 'Tweet criado com sucesso!');
+
+        // Emite um evento para atualizar a lista de tweets
+        $this->emit('tweet-created');
+    }
+
+    // Processa as hashtags no conteúdo do tweet
+    private function processHashtags(Tweet $tweet)
+    {
         preg_match_all('/#(\w+)/', $this->content, $matches);
         $hashtags = collect($matches[1])->unique();
+
         foreach ($hashtags as $tag) {
-            $hashtagName = '#' . Str::lower($tag); // Adiciona o # à hashtag
-            $hashtag = Hashtag::firstOrCreate(['name' => $hashtagName]); // Salva a hashtag se ainda não existir
-            $hashtag->increment('count'); // Incrementa a contagem de uso da hashtag
-
-            // Associa a hashtag ao tweet na tabela pivot
+            $hashtagName = '#' . Str::lower($tag);
+            $hashtag = Hashtag::firstOrCreate(['name' => $hashtagName]);
+            $hashtag->increment('count');
             $tweet->hashtags()->attach($hashtag->id);
-
-            // Substituir a hashtag no conteúdo do tweet por um link
-            $tweet->content = str_replace("#$tag", "<a href=\"#\" wire:click.prevent=\"showHashtag('{$tag}')\" class=\"hashtag-link\">$hashtagName</a>", $tweet->content);
+            $this->replaceHashtagWithLink($tweet, $tag, $hashtagName);
         }
-
 
         $tweet->save();
+    }
 
+    // Substitui as hashtags no conteúdo do tweet por links
+    private function replaceHashtagWithLink(Tweet $tweet, $tag, $hashtagName)
+    {
+        $tweet->content = str_replace(
+            "#$tag",
+            "<a href=\"#\" wire:click.prevent=\"showHashtag('{$tag}')\" class=\"hashtag-link\">$hashtagName</a>",
+            $tweet->content
+        );
+    }
+
+    // Reseta os campos do formulário
+    private function resetFields()
+    {
         $this->content = '';
         $this->media = null;
+    }
 
-        if ($tweet) {
-            $this->dispatch('toast', ['tweetType' => 'success', 'message' => 'Tweet criado com sucesso!']);
-            $this->dispatch('tweet-created'); // Emitir evento para notificar a atualização da lista de tweets
-        } else {
-            $this->dispatch('toast', ['tweetType' => 'error', 'message' => 'Erro ao criar o tweet. Por favor, tente novamente.']);
-        }
+    // Dispara um evento para exibir uma mensagem de alerta
+    private function dispatchToast($type, $message)
+    {
+        $this->dispatch('toast', ['tweetType' => $type, 'message' => $message]);
     }
 }
