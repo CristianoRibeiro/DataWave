@@ -83,4 +83,38 @@ class User extends Authenticatable
     {
         return $this->following->contains($user);
     }
+
+
+     /**
+     * Define a relação de muitos para muitos entre usuários e tweets
+     * para representar os tweets que este usuário curtiu.
+     */
+    public function likes()
+    {
+        return $this->belongsToMany(Tweet::class, 'likes', 'user_id', 'tweet_id')->withTimestamps();
+    }
+
+    /**
+     * Permite que o usuário curta um tweet.
+     */
+    public function like(Tweet $tweet)
+    {
+        $this->likes()->attach($tweet->id);
+    }
+
+    /**
+     * Permite que o usuário descurta um tweet.
+     */
+    public function unlike(Tweet $tweet)
+    {
+        $this->likes()->detach($tweet->id);
+    }
+
+    /**
+     * Verifica se o usuário curtiu um determinado tweet.
+     */
+    public function hasLiked(Tweet $tweet)
+    {
+        return $this->likes->contains($tweet);
+    }
 }

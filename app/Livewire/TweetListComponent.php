@@ -82,6 +82,7 @@ class TweetListComponent extends Component
         // Transforma os tweets processando as hashtags
         return $tweets->transform(function ($tweet) {
             $tweet->content = $this->processHashtags($tweet->content);
+            $tweet->liked = auth()->user()->hasLiked($tweet);
             return $tweet;
         });
     }
@@ -108,6 +109,22 @@ class TweetListComponent extends Component
         $this->selectedHashtag = $hashtag;
         $this->showTweetComponent = false;
         $this->dispatch('hideTweetComponent');
+    }
+
+    public function likeTweet($tweetId)
+    {
+        // Permite que o usuário curta um tweet
+        $tweet = Tweet::find($tweetId);
+        auth()->user()->like($tweet);
+        $this->render(); // Renderiza a página novamente após a ação
+    }
+
+    public function unlikeTweet($tweetId)
+    {
+        // Permite que o usuário descurta um tweet
+        $tweet = Tweet::find($tweetId);
+        auth()->user()->unlike($tweet);
+        $this->render(); // Renderiza a página novamente após a ação
     }
 
     public function searchTriggered($term)
